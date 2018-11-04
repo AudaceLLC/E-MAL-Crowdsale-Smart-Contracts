@@ -8,6 +8,7 @@ contract EmalToken {
     // add function prototypes of only those used here
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool);
     function getPresaleAmount() public view returns(uint256);
+    function getExchangeRate() public view returns(uint256);
 }
 
 contract EmalWhitelist {
@@ -79,21 +80,9 @@ contract EmalPresale is Ownable, Pausable {
     /** @dev variables and functions which determine conversion rate from ETH to EML
       * based on bonuses and current timestamp.
       */
-    uint256 priceOfEthInUSD = 450;
     uint256 bonusPercent1 = 35;
     uint256 priceOfEMLTokenInUSDPenny = 60;
     uint256 overridenBonusValue = 0;
-
-    function setExchangeRate(uint256 overridenValue) public onlyOwner returns(bool) {
-        require( overridenValue > 0 );
-        require( overridenValue != priceOfEthInUSD);
-        priceOfEthInUSD = overridenValue;
-        return true;
-    }
-
-    function getExchangeRate() public view returns(uint256){
-        return priceOfEthInUSD;
-    }
 
     function setOverrideBonus(uint256 overridenValue) public onlyOwner returns(bool) {
         require( overridenValue > 0 );
@@ -106,11 +95,12 @@ contract EmalPresale is Ownable, Pausable {
       * @return The current token rate
       */
     function getRate() public view returns(uint256) {
-        require(priceOfEMLTokenInUSDPenny > 0 );
-        require(priceOfEthInUSD > 0 );
         uint256 rate;
+        uint256 priceOfEthInUSD= token.getExchangeRate();
+        require(priceOfEMLTokenInUSDPenny> 0 );
+        require(priceOfEthInUSD> 0 );
 
-        if(overridenBonusValue > 0){
+        if(overridenBonusValue>0) {
             rate = priceOfEthInUSD.mul(100).div(priceOfEMLTokenInUSDPenny).mul(overridenBonusValue.add(100)).div(100);
         } else {
             rate = priceOfEthInUSD.mul(100).div(priceOfEMLTokenInUSDPenny).mul(bonusPercent1.add(100)).div(100);
@@ -127,14 +117,15 @@ contract EmalPresale is Ownable, Pausable {
       * @param _list contains a list of investors who completed KYC procedures.
       */
     constructor(uint256 _startTime, uint256 _endTime, address _multisigWallet, address _token, address _list) public {
+    /* constructor(address _multisigWallet, address _token, address _list) public { */
         require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_multisigWallet != address(0));
         require(_token != address(0));
         require(_list != address(0));
 
-        startTime = _startTime;
-        endTime = _endTime;
+        startTime = now;
+        endTime = startTime + 2 weeks;
         multisigWallet = _multisigWallet;
         owner = msg.sender;
         token = EmalToken(_token);
@@ -249,6 +240,7 @@ contract EmalPresale is Ownable, Pausable {
     function allocateTokens(address beneficiary, uint256 tokenCount) public onlyOwner returns(bool success) {
         require(beneficiary != address(0));
         require(validAllocation(tokenCount));
+        require(list.isWhitelisted(beneficiary));
 
         uint256 tokens = tokenCount;
 

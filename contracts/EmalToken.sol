@@ -9,20 +9,20 @@ contract EmalToken is StandardToken, Ownable {
     using SafeMath for uint256;
 
     string public constant symbol = "EML";
-    string public constant name = "E-Mal Token";
+    string public constant name = "e-Mal Token";
     uint8 public constant decimals = 18;
 
     // Total Number of tokens ever goint to be minted. 1 BILLION EML tokens.
     uint256 private constant minting_capped_amount = 1000000000 * 10 ** uint256(decimals);
 
-    // 24% of initial supply
-    uint256 constant presale_amount = 120000000 * 10 ** uint256(decimals);
-    // 60% of inital supply
-    uint256 constant crowdsale_amount = 300000000 * 10 ** uint256(decimals);
-    // 8% of inital supply.
-    uint256  constant vesting_amount = 40000000 * 10 ** uint256(decimals);
-    // 8% of inital supply.
-    uint256 constant bounty_amount = 40000000 * 10 ** uint256(decimals);
+    // 7% of initial supply
+    uint256 constant presale_amount = 35000000 * 10 ** uint256(decimals);
+    // 70% of inital supply
+    uint256 constant crowdsale_amount = 350000000 * 10 ** uint256(decimals);
+    // 21% of inital supply.
+    uint256  constant vesting_amount = 105000000 * 10 ** uint256(decimals);
+    // 2% of inital supply.
+    uint256 constant bounty_amount = 10000000 * 10 ** uint256(decimals);
     // Total initial supply of tokens to be given away initially. Rested is minted. Should be 500M tokens.
     uint256 private initialSupply = presale_amount.add(crowdsale_amount.add(vesting_amount.add(bounty_amount)));
 
@@ -68,8 +68,36 @@ contract EmalToken is StandardToken, Ownable {
     event Burn(address indexed burner, uint256 value);
 
 
+    /** @dev variables and functions which determine conversion rate from ETH to EML
+      */
+    uint256 priceOfEthInUSD = 450;
+    uint256 priceOfEMLTokenInUSDPenny = 100;
+
+    function setExchangeRate(uint256 overridenValue) public onlyOwner returns(bool) {
+        require( overridenValue > 0 );
+        require( overridenValue != priceOfEthInUSD);
+        priceOfEthInUSD = overridenValue;
+        return true;
+    }
+
+    function getExchangeRate() public view returns(uint256){
+        return priceOfEthInUSD;
+    }
+
+    /** @dev public function that is used to determine the current rate for ETH to EML conversion
+      * @return The current token rate
+      */
+    function getRate() public view returns(uint256) {
+        require( priceOfEMLTokenInUSDPenny>0 );
+        require( priceOfEthInUSD>0 );
+        uint256 rate;
+
+        rate = priceOfEthInUSD.mul(100).div(priceOfEMLTokenInUSDPenny);
+        return rate;
+    }
+
     constructor() public {
-        startTimeForTransfers = now + 365 days;
+        startTimeForTransfers = now + 70 days;
 
         _totalSupply = initialSupply;
         owner = msg.sender;

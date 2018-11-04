@@ -41,6 +41,7 @@ contract EmalWhitelist is Ownable {
      */
     function addToWhitelist(address investorAddr) public onlyOwner returns(bool success) {
         require(investorAddr!= address(0));
+        require(whitelist[investorAddr]!= true);
         whitelist[investorAddr] = true;
         return true;
     }
@@ -51,9 +52,9 @@ contract EmalWhitelist is Ownable {
      */
     function removeFromWhitelist(address investorAddr) public onlyOwner returns(bool success) {
         require(investorAddr!= address(0));
+        require(whitelist[investorAddr]!= false);
         whitelist[investorAddr] = false;
         return true;
     }
-
 
 }
